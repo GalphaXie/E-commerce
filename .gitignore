@@ -107,4 +107,4 @@ venv.bak/
 .idea
 
 # 数据库迁移不上传
-.migrations
+.migrations/*
