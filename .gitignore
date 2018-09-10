@@ -105,3 +105,6 @@ venv.bak/
 
 # Pycharm
 .idea
+
+# 数据库迁移不上传
+.migrations
