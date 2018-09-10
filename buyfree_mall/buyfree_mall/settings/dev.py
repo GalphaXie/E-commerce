@@ -188,3 +188,6 @@ REST_FRAMEWORK = {
     # 异常处理
     'EXCEPTION_HANDLER': 'meiduo_mall.utils.exceptions.exception_handler',
 }
+
+# 配置,让django使用我们定义的模型
+AUTH_USER_MODEL = 'users.User'
