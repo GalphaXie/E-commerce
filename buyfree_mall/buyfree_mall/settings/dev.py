@@ -104,6 +104,13 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    "verify_codes": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
 }
 # 给admin站点使用的session
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -165,7 +172,7 @@ LOGGING = {
         },
     },
     'handlers': {  # 控制
-        'console': {  #  往终端写
+        'console': {  # 往终端写
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
