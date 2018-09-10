@@ -29,7 +29,7 @@ SECRET_KEY = '!@6$2#+es%24#kbbq^!_=54s@7b2o@g3wfyy(rx@=mcvf8)%gs'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['api.buyfree.site', '127.0.0.1', 'localhost', 'www.buyfree.site']
 
 # Application definition
 
