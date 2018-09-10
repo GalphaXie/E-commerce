@@ -17,7 +17,7 @@ def exception_handler(exc, context):
     :return: Response响应对象
     """
     # 调用drf框架原生的异常处理方法
-    response = drf_exception_handler(exc, context)
+    response = drf_exception_handler(exc, context)  # rest提供的方法如果不能处理的异常，该函数最后会返回 None。
 
     if response is None:
         view = context['view']
@@ -27,3 +27,11 @@ def exception_handler(exc, context):
             response = Response({'message': '服务器内部错误'}, status=status.HTTP_507_INSUFFICIENT_STORAGE)
 
     return response
+
+
+# 异常处理的思路:
+# 1.1异常分类成 个性化异常
+# 1.2异常分类成 可以集中处理的异常；
+# 2 这里自定义的异常就是来处理 mysql和redis的异常，我们来借鉴 rest_framework 自带的异常处理机制
+# 3.自己封装的 代表性的工具，所以选择放在 utils ，而不是 外面的 __init__。
+# 4.导包的时候为了不覆盖，所以这里就用了 as，这是一个技巧，类似‘装饰器’思想，在同级中添加功能。

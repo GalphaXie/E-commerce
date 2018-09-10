@@ -18,6 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import sys
 
 sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
+# print(sys.path)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -103,6 +104,7 @@ CACHES = {
         }
     },
 }
+# 给admin站点使用的session
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
 
@@ -130,6 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # LANGUAGE_CODE = 'en-us'
 #
 # TIME_ZONE = 'UTC'
+# 大小写均可，大写可能会出现‘繁体’信息
 LANGUAGE_CODE = 'zh-hans'
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -145,48 +148,48 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
+    'version': 1,  # 这一行是固定的
+    'disable_existing_loggers': False,  # 是否禁止已存在的日志器
+    'formatters': {  # 格式化信息
+        'verbose': {  # 冗长的
             'format': '%(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s'
         },
-        'simple': {
+        'simple': {  # 简单的
             'format': '%(levelname)s %(module)s %(lineno)d %(message)s'
         },
     },
-    'filters': {
+    'filters': {  # 过滤器，这里不做任何过滤
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
     },
-    'handlers': {
-        'console': {
+    'handlers': {  # 控制
+        'console': {  #  往终端写
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'file': {
+        'file': {  # 往文件写
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(os.path.dirname(BASE_DIR), "logs/meiduo.log"),
-            'maxBytes': 300 * 1024 * 1024,
-            'backupCount': 10,
+            'filename': os.path.join(os.path.dirname(BASE_DIR), "logs/buyfree.log"),  # 往哪里写，文件名
+            'maxBytes': 300 * 1024 * 1024,  # 文件大小
+            'backupCount': 10,  # 最多保留多少个
             'formatter': 'verbose'
         },
     },
-    'loggers': {
-        'django': {
+    'loggers': {  # 创建loggers日志器对象
+        'django': {  # 定义一个名为 django 的日志器
             'handlers': ['console', 'file'],
-            'propagate': True,
+            'propagate': True,  # 传播传送繁殖 -- 是否‘往上一级传递，冒泡’
         },
     }
 }
 
 REST_FRAMEWORK = {
     # 异常处理
-    'EXCEPTION_HANDLER': 'meiduo_mall.utils.exceptions.exception_handler',
+    'EXCEPTION_HANDLER': 'buyfree_mall.utils.exceptions.exception_handler',
 }
 
 # 配置,让django使用我们定义的模型
