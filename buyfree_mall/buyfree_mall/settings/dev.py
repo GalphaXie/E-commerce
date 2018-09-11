@@ -43,9 +43,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'users.apps.UsersConfig',
     'verifications.apps.VerificationsConfig',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # 关注顺序  # 解决跨域请求
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -202,3 +204,13 @@ REST_FRAMEWORK = {
 
 # 配置,让django使用我们定义的模型
 AUTH_USER_MODEL = 'users.User'
+
+# CORS
+# 对比 ALLOWED_HOSTS , 为何上面不用端口,这里要加上port
+CORS_ORIGIN_WHITELIST = (
+    '127.0.0.1:8080',
+    'localhost:8080',
+    'www.buyfree.site:8080',
+    'api.buyfree.site:8000'
+)
+CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
