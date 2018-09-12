@@ -29,7 +29,7 @@ SECRET_KEY = '!@6$2#+es%24#kbbq^!_=54s@7b2o@g3wfyy(rx@=mcvf8)%gs'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['api.buyfree.site', '127.0.0.1', 'localhost', 'www.buyfree.site']
+ALLOWED_HOSTS = ['api.meiduo.site', '127.0.0.1', 'localhost', 'www.meiduo.site']
 
 # Application definition
 
@@ -228,8 +228,8 @@ AUTHENTICATION_BACKENDS = [
 CORS_ORIGIN_WHITELIST = (
     '127.0.0.1:8080',
     'localhost:8080',
-    'www.buyfree.site:8080',
-    'api.buyfree.site:8000'
+    'www.meiduo.site:8080',
+    'api.meiduo.site:8000'
 )
 CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
 

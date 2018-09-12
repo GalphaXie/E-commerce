@@ -21,6 +21,7 @@ class QQAuthURLView(APIView):
         # 拼接QQ登录的网址
         oauth_qq = OAuthQQ(state=next)
         login_url = oauth_qq.get_login_url()
+        print(login_url)
 
         # 返回
         return Response({'login_url': login_url})
