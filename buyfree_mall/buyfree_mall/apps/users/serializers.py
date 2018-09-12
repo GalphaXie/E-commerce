@@ -7,6 +7,7 @@ import re
 
 from django_redis import get_redis_connection
 from rest_framework import serializers
+from rest_framework_jwt.settings import api_settings
 
 from users.models import User
 
@@ -19,11 +20,14 @@ class CreateUserSerializer(serializers.ModelSerializer):
     sms_code = serializers.CharField(label='短信验证码', write_only=True)
     allow = serializers.BooleanField(label='同意协议', write_only=True)
 
+    # 添加字段
+    token = serializers.CharField(label='jwt token', read_only=True)
+
     class Meta:
         model = User
         # fields 中拿取的不止 model属性指明的模型类中的字段,还包括我们 需要主动添加的 字段
         # 关于id字段的说明: id是数据库自增生成的,drf默认不需要前端传递过来; 这里没有'限制'其返回,所以可以不用设置只需要添加在fields中就可以返回.
-        fields = ('id', 'username', 'password', 'password2', 'sms_code', 'mobile', 'allow')
+        fields = ('id', 'username', 'password', 'password2', 'sms_code', 'mobile', 'allow', 'token')
 
         # 通过 extra_kwargs 来配置字段额外的申明
         extra_kwargs = {
@@ -93,6 +97,13 @@ class CreateUserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
 
         user.save()
+
+        # 签发 jwt token ; 注意:导入 从rest_framework_jwt
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+        payload = jwt_payload_handler(user)
+        token = jwt_encode_handler(payload)
+        user.token = token
 
         # return 最终会被序列化的数据,可以是  模型对象 或 validated_data
         return user
