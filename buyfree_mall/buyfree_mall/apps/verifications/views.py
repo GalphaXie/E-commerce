@@ -15,6 +15,7 @@ import logging
 # 优雅的写法：自己的包导入和其他的都空一行，然后放在下面
 from buyfree_mall.utils.yuntongxun.sms import CCP
 from celery_tasks.sms.tasks import send_sms_code
+from users.models import User
 from verifications.serializers import ImageCodeCheckSerializer
 from . import constants
 
@@ -95,3 +96,23 @@ class SMSCodeView(GenericAPIView):
 
         # 响应 (不是从数据库返回的数据,简单的数据,不需要序列化器)
         return Response({'message': 'OK'})
+
+
+# 分析: 接受前端通过正则校验过的数据,到数据库查询用户名的数量,返回给前端
+# url(r'^usernames/(?P<username>\w{5,20})/count/$', views.UsernameCountView.as_view()),
+class UsernameCountView(APIView):
+    """
+    用户名数量
+    """
+    def get(self, request, username):
+        """
+        获取指定用户名数量
+        """
+        count = User.objects.filter(username=username).count()
+
+        data = {
+            'username': username,
+            'count': count
+        }
+
+        return Response(data)
