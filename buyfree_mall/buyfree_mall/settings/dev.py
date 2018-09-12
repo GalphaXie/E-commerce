@@ -211,10 +211,16 @@ REST_FRAMEWORK = {
 JWT_AUTH = {
     # 注册
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),  # token过期时间
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'users.utils.jwt_response_payload_handler',
 }
 
 # 配置,让django使用我们定义的模型
 AUTH_USER_MODEL = 'users.User'
+
+# 认证方法
+AUTHENTICATION_BACKENDS = [
+    'users.utils.UsernameMobileAuthBackend',
+]
 
 # CORS
 # 对比 ALLOWED_HOSTS , 为何上面不用端口,这里要加上port
