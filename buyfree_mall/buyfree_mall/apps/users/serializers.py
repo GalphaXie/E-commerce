@@ -55,7 +55,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     def validate_allow(self, value):
         """检验用户是否同意协议"""
-        if value != 'true':
+        if value != True:
             raise serializers.ValidationError('请同意用户协议')
         return value
 
@@ -85,11 +85,12 @@ class CreateUserSerializer(serializers.ModelSerializer):
         del validated_data['allow']
 
         # 方式一: 原始的数据库的方式
-        user = User.objects.create(**validated_data)
+        # user = User.objects.create(**validated_data)
         # 方式二: Modelserializers 的方法 (不需要拆包)
         user = super().create(validated_data)
 
-        user.set_password()
+        # 调用django的认证系统加密密码
+        user.set_password(validated_data['password'])
 
         user.save()
 

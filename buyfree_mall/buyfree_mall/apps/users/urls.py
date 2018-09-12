@@ -7,6 +7,6 @@ from django.conf.urls import url
 
 from users import views
 
-urlpatterns={
+urlpatterns = [
     url(r'^users/$', views.UserView.as_view())
-}
+]
