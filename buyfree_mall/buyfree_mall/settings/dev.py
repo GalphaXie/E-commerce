@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-
+import datetime
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -43,9 +43,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'users.apps.UsersConfig',
     'verifications.apps.VerificationsConfig',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # 关注顺序  # 解决跨域请求
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -198,7 +200,34 @@ LOGGING = {
 REST_FRAMEWORK = {
     # 异常处理
     'EXCEPTION_HANDLER': 'buyfree_mall.utils.exceptions.exception_handler',
+    # 这个配置要等后面做购物车的时候才有用
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+JWT_AUTH = {
+    # 注册
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),  # token过期时间
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'users.utils.jwt_response_payload_handler',
 }
 
 # 配置,让django使用我们定义的模型
 AUTH_USER_MODEL = 'users.User'
+
+# 认证方法
+AUTHENTICATION_BACKENDS = [
+    'users.utils.UsernameMobileAuthBackend',
+]
+
+# CORS
+# 对比 ALLOWED_HOSTS , 为何上面不用端口,这里要加上port
+CORS_ORIGIN_WHITELIST = (
+    '127.0.0.1:8080',
+    'localhost:8080',
+    'www.buyfree.site:8080',
+    'api.buyfree.site:8000'
+)
+CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
