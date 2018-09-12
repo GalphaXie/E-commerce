@@ -14,6 +14,7 @@ import logging
 
 # 优雅的写法：自己的包导入和其他的都空一行，然后放在下面
 from buyfree_mall.utils.yuntongxun.sms import CCP
+from celery_tasks.sms.tasks import send_sms_code
 from verifications.serializers import ImageCodeCheckSerializer
 from . import constants
 
@@ -70,21 +71,27 @@ class SMSCodeView(GenericAPIView):
         # 让管道通知redis执行命令
         pl.execute()
 
-        # 发送短信验证码
-        try:
-            sms_code_expires = str(constants.SMS_CODE_REDIS_EXPIRES // 60)  # 地板除
-            ccp = CCP()
-            result = ccp.send_template_sms(mobile, [sms_code, sms_code_expires],
-                                           constants.SMS_CODE_TEMP_ID)  # 注意： 测试的短信模板编号为1
-        except Exception as e:
-            logger.error("发送验证码短信[异常][ mobile: %s, message: %s ]" % (mobile, e))
-            return Response({'message': 'failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            if result == 0:
-                logger.info("发送验证码短信[正常][ mobile: %s ]" % mobile)
-                return Response({'message': 'OK'})
-            else:
-                logger.warning("发送验证码短信[失败][ mobile: %s ]" % mobile)
-                return Response({'message': 'failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # # 发送短信验证码
+        # try:
+        #     sms_code_expires = str(constants.SMS_CODE_REDIS_EXPIRES // 60)  # 地板除
+        #     ccp = CCP()
+        #     result = ccp.send_template_sms(mobile, [sms_code, sms_code_expires],
+        #                                    constants.SMS_CODE_TEMP_ID)  # 注意： 测试的短信模板编号为1
+        # except Exception as e:
+        #     logger.error("发送验证码短信[异常][ mobile: %s, message: %s ]" % (mobile, e))
+        #     return Response({'message': 'failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # else:
+        #     if result == 0:
+        #         logger.info("发送验证码短信[正常][ mobile: %s ]" % mobile)
+        #         return Response({'message': 'OK'})
+        #     else:
+        #         logger.warning("发送验证码短信[失败][ mobile: %s ]" % mobile)
+        #         return Response({'message': 'failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 使用celery 发送短信验证码
+        sms_code_expires = str(constants.SMS_CODE_REDIS_EXPIRES // 60)  # 地板除
+        # 调用任务函数
+        send_sms_code.delay(mobile, sms_code, sms_code_expires, constants.SMS_CODE_TEMP_ID)
 
         # 响应 (不是从数据库返回的数据,简单的数据,不需要序列化器)
+        return Response({'message': 'OK'})
