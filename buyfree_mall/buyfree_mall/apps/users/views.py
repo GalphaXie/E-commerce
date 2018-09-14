@@ -4,12 +4,13 @@ from django.shortcuts import render
 
 
 # url(r'^users/$', views.UserView.as_view()),
-from rest_framework.generics import CreateAPIView, RetrieveAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import User
+from users.serializers import EmailSerializer
 from . import serializers
 
 
@@ -56,3 +57,16 @@ class UserDetailView(RetrieveAPIView):
         # 在类视图对象中，可以通过类视图对象的属性获取request
         # 在django的请求request对象中，user属性表明当请请求的用户
         return self.request.user
+
+
+# 　put /email/  <-  rest /users/<user_id>/email
+class EmailView(UpdateAPIView):
+    '''
+    保存邮箱
+    '''
+    serializer_class = EmailSerializer
+    permission_classes = [IsAuthenticated]
+
+    # 获取邮箱
+    # 校验邮箱
+    # 返回
