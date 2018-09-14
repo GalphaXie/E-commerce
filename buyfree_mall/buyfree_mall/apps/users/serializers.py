@@ -51,6 +51,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
         }
 
     # 防止缩进错误
+    # 对validate_字段名 对单个字段进行 '自己代码' 的校验
     def validate_mobile(self, value):
         """验证手机号"""
         if not re.match(r'^1[3-9]\d{9}$', value):
@@ -63,6 +64,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('请同意用户协议')
         return value
 
+    # 密码 整体校验
     def validate(self, data):
         # 判断两次密码
         if data['password'] != data['password2']:
