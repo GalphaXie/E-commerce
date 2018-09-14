@@ -109,3 +109,17 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
         # return 最终会被序列化的数据,可以是  模型对象 或 validated_data
         return user
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    '''
+    username, mobile, email id email_active
+    该序列化器不需要进行校验操作,只需要向前端返回
+    '''
+
+    class Meta:
+        model = User
+        fields = ('id', 'usernaem', 'mobile', 'email', 'email_active')
+
+
+
