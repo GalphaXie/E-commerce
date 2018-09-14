@@ -17,7 +17,7 @@ from oauth.utils import OAuthQQ
 #  url(r'^qq/authorization/$', views.QQAuthURLView.as_view()),
 class QQAuthURLView(APIView):
     '''
-    获取QQ登录的url  ?next=
+    获取QQ登录的url  ?next=xxx
     '''
 
     def get(self, request):
@@ -27,7 +27,7 @@ class QQAuthURLView(APIView):
         # 拼接QQ登录的网址
         oauth_qq = OAuthQQ(state=next)
         login_url = oauth_qq.get_login_url()
-        print(login_url)
+        # print(login_url)
 
         # 返回
         return Response({'login_url': login_url})
