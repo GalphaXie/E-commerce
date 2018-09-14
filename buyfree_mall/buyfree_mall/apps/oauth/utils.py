@@ -3,6 +3,7 @@
 # @Author : Xie
 # @Date   : 9/12/18
 # @Desc   :
+import json
 import urllib.parse
 import urllib.request
 import logging
@@ -72,17 +73,17 @@ class OAuthQQ(object):
 
     def get_openid(self, access_token):
         """通过 access_token 来获取 openid"""
-        url = 'https://graph.qq.com/oauth2.0/me'
+        url = 'https://graph.qq.com/oauth2.0/me?'
         params = {
             'access_token': access_token
         }
         url += urllib.parse.urlencode(params)
         try:
-            resp_data = urllib.request.urlopen(url).read().decode()  # 查询str
+            resp_data = urllib.request.urlopen(url).read().decode()  # str
             # 其返回字符串如下:
             # callback( {"client_id": "YOUR_APPID", "openid": "YOUR_OPENID"} )\n;
             resp_data = resp_data[10:-4]
-            resp_dict = urllib.parse.parse_qs(resp_data)
+            resp_dict = json.loads(resp_data)
             open_id = resp_dict.get('openid')
         except Exception as e:
             logger.error('获取openid异常：%s' % e)
@@ -92,6 +93,12 @@ class OAuthQQ(object):
 
     @staticmethod
     def generate_bind_user_access_token(openid):
+        """
+        生成保存用户数据的token
+        :param openid: 用户的openid
+        :return: token
+        """
+        # serializer = TJWSSerializer(settings.SECRET_KEY, constants.BIND_USER_ACCESS_TOKEN_EXPIRES)
         serializer = TJWSSerializer(settings.SECRET_KEY, constants.BIND_USER_ACCESS_TOKEN_EXPIRES)
         token = serializer.dumps({'openid': openid})
         return token.decode()
