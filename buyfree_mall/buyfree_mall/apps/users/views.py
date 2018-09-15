@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import User
-from users.serializers import EmailSerializer
 from . import serializers
 
 
@@ -84,7 +83,7 @@ class EmailView(UpdateAPIView):
     '''
     保存邮箱
     '''
-    serializer_class = EmailSerializer
+    serializer_class = serializers.EmailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self, *args, **kwargs):
