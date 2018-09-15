@@ -4,6 +4,7 @@ from django.shortcuts import render
 
 
 # url(r'^users/$', views.UserView.as_view()),
+from rest_framework import status
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -88,3 +89,29 @@ class EmailView(UpdateAPIView):
 
     def get_object(self, *args, **kwargs):
         return self.request.user
+
+
+# url(r'^emails/verification/$', views.VerifyEmailView.as_view()),
+class VerifyEmailView(APIView):
+    """
+    邮箱验证
+    这里可以采用 get 或 post 多种请求方式,但是这里采取 get 请求
+    request参数:　token=?
+    response参数: message
+    """
+
+    def get(self, request):
+        # 接收参数
+        token = request.query_params.get('token')
+        if not token:
+            return Response({'message': '缺少token'}, status=status.HTTP_400_BAD_REQUEST)
+        # 校验参数 token
+        user = User.check_verify_email_token(token)  # 校验token是属于 User模型的一个字段, 再借鉴User的封装的方法,我们可以自己定义模型类的方法
+
+        if not user:
+            return Response({'message': '链接信息无效'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # 如果token正常传递过来,那么激活成功,在数据库中进行标记 email_active
+            user.email_active = True
+            user.save()
+            return Response({'message': 'OK'})  # 返回成功

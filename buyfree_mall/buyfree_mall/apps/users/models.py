@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 
 from django.contrib.auth.models import AbstractUser
-from itsdangerous import TimedJSONWebSignatureSerializer as TJWSSerializer
+from itsdangerous import TimedJSONWebSignatureSerializer as TJWSSerializer, BadData
 
 from users import constants
 
@@ -34,3 +34,26 @@ class User(AbstractUser):
         token = serializer.dumps(data).decode()  # bytes字符串 -> 解码
         verify_url = 'http://www.meiduo.site:8080/success_verify_email.html?token=' + token  # 拼接
         return verify_url
+
+    @classmethod
+    def check_verify_email_token(token):
+        '''
+        校验邮箱校验时候传递过来的token是否被修改
+        套路方法: 和上面是逆向过程
+        :return:
+        '''
+        serializer = TJWSSerializer(settings.SECRET_KEY, expires_in=constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+        try:
+            data = serializer.loads(token)
+        except BadData:
+            return None
+        else:
+            # 取出要返回给前端的数据, 可以通过 data.get去获得,就是上面生成的时候 传递进去的data
+            email = data.get('email')
+            user_id = data.get('user_id')
+            try:  # 查询数据库操作
+                user = User.objects.filter(email=email, user_id=user_id)
+            except User.DoesNOtExist:
+                return
+            else:
+                return user
