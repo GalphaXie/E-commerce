@@ -25,3 +25,6 @@ class Area(models.Model):
     # 这个方法在后面写子类模型化类的时候会用到
     def __str__(self):
         return self.name
+
+
+
