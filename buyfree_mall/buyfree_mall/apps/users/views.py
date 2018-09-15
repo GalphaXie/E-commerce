@@ -23,6 +23,7 @@ class UserView(CreateAPIView):
     serializer_class = serializers.CreateUserSerializer
 
 
+# 分析: 接受前端通过正则校验过的数据,到数据库查询用户名的数量,返回给前端
 # url(r'^usernames/(?P<username>\w{5,20})/count/$', views.UsernameCountView.as_view()),
 class UsernameCountView(APIView):
     """
@@ -40,6 +41,25 @@ class UsernameCountView(APIView):
             'count': count
         }
 
+        return Response(data)
+
+
+# url(r'^mobiles/(?P<mobile>1[3-9]\d{9})/count/$', views.MobileCountView.as_view()),
+class MobileCountView(APIView):
+    """
+    手机号数量
+    """
+
+    def get(self, request, mobile):
+        """
+        获取指定手机号数量
+        """
+        count = User.objects.filter(mobile=mobile).count()
+
+        data = {
+            'mobile': mobile,
+            'count': count
+        }
         return Response(data)
 
 
