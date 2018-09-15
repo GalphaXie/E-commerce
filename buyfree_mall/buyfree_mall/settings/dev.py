@@ -250,3 +250,11 @@ EMAIL_HOST_USER = 'defaulttest@163.com'
 EMAIL_HOST_PASSWORD = 'xiexie39'
 # 收件人看到的发件人
 EMAIL_FROM = '帅哭你有限责任公司<defaulttest@163.com>'
+
+# DRF扩展
+REST_FRAMEWORK_EXTENSIONS = {
+    # 缓存时间
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT': 60 * 60,
+    # 缓存存储
+    'DEFAULT_USE_CACHE': 'default',
+}

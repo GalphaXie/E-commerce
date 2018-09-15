@@ -2,12 +2,13 @@ from django.shortcuts import render
 
 # Create your views here.
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_extensions.cache.mixins import CacheResponseMixin
 
 from areas.models import Area
 from areas.serializers import AreaSerializer, SubAreaSerializer
 
 
-class AreasViewSet(ReadOnlyModelViewSet):
+class AreasViewSet(CacheResponseMixin, ReadOnlyModelViewSet):
     """
    行政区划信息
    # GET /areas/(?P<pk>\d+)/
