@@ -106,7 +106,7 @@ class VerifyEmailView(APIView):
         if not token:
             return Response({'message': '缺少token'}, status=status.HTTP_400_BAD_REQUEST)
         # 校验参数 token
-        user = User.check_verify_email_token(token)  # 校验token是属于 User模型的一个字段, 再借鉴User的封装的方法,我们可以自己定义模型类的方法
+        user = User.check_vertify_email_token(token)  # 校验token是属于 User模型的一个字段, 再借鉴User的封装的方法,我们可以自己定义模型类的方法
 
         if not user:
             return Response({'message': '链接信息无效'}, status=status.HTTP_400_BAD_REQUEST)
