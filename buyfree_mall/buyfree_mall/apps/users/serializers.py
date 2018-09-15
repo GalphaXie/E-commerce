@@ -9,6 +9,7 @@ from django_redis import get_redis_connection
 from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 
+from celery_tasks.email.tasks import send_verify_email
 from users.models import User
 
 
@@ -119,15 +120,28 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'mobile', 'email', 'email_active')
+        fields = ('id', 'username', 'mobile', 'email', 'email_active')  # id 自增的,不需要前端传递
 
 
 class EmailSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = ('id', 'email')
+        # 这里邮箱都不需要自己校验,因为邮箱格式都是一样,而且自带了校验;因为AbstractUser有字段email,对应到序列化器Serializer.EmailField()
+        extra_kwargs = {
+            'email': {
+                'required': True
+            }
+        }
 
+    def update(self, instance, validated_data):
+        '''
 
-
-
+        :param instance: 视图传递过来的user对象
+        :param validated_data:
+        :return:
+        '''
+        email = validated_data['email']
+        url = instance.generate_verify_email_url()
+        send_verify_email.delay(email, url)
+        return instance
