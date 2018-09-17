@@ -10,7 +10,7 @@ from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 
 from celery_tasks.email.tasks import send_verify_email
-from users.models import User
+from users.models import User, Address
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -145,3 +145,44 @@ class EmailSerializer(serializers.ModelSerializer):
         url = instance.generate_verify_email_url()
         send_verify_email.delay(email, url)
         return instance
+
+
+class UserAddressSerializer(serializers.ModelSerializer):
+    """
+    用户地址序列化器
+    tb_address表中对应的字段:　
+    id create_time update_time title receiver place mobile tel email is_delete city_id district_id province_id user_id
+    """
+    # 可以发现　模型类　中　外键字段　是以　id 存储的, 但是可以取出其 对应的 对象, 所以在序列化器中可以直接写 id 对应的 对象名字 等字段
+    # 前端传递回来的是 id ; 而我们要给前端展示的是 对象name
+    # 下面只对 三个 外键 标记的字段作了 选项的操作
+    province = serializers.StringRelatedField(read_only=True)
+    city = serializers.StringRelatedField(read_only=True)
+    district = serializers.StringRelatedField(read_only=True)
+    province_id = serializers.IntegerField(label='省ID', required=True)
+    city_id = serializers.IntegerField(label='市ID', required=True)
+    district_id = serializers.IntegerField(label='区ID', required=True)
+
+    class Meta:
+        model = Address
+        exclude = ('user', 'is_deleted', 'create_time', 'update_time')
+
+    def validate_mobile(self, value):
+        """校验手机号"""
+        if not re.match(r'1[3-9]\d{9}$', value):
+            return serializers.ValidationError('手机格式错误')
+        return value
+
+    def create(self, validated_data):
+        """保存数据"""
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class AddressTitleSerializer(serializers.ModelSerializer):
+    """
+    地址标题
+    """
+    class Meta:
+        model = Address
+        fields = ('title',)  # 元组字段
