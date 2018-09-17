@@ -39,7 +39,7 @@ class FastDFSStorage(Storage):
        :return: 保存到数据库中的FastDFS的文件名
        """
         client = Fdfs_client(self.client_conf)
-        ret = client.upload_by_buffer(content.read())
+        ret = client.upload_by_buffer(content.read(), file_ext_name=name.split('.')[-1])  # file_ext_name 完美修正bug
         '''
         {'Local file name': '/home/richard/Pictures/新垣结衣.jpg', 'Storage IP': '192.168.129.167', 
         'Remote file_id': 'group1/M00/00/00/wKiBp1ufSnaAIdM0AAHHjjn2qwE783.jpg', 
