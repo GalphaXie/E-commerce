@@ -4,6 +4,7 @@ from django.shortcuts import render
 
 
 # url(r'^users/$', views.UserView.as_view()),
+from django_redis import get_redis_connection
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView
@@ -13,10 +14,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
+from goods.models import SKU
 from users import constants
 from users.models import User
 from users.serializers import UserAddressSerializer, AddressTitleSerializer, CreateUserSerializer, EmailSerializer, \
-    UserDetailSerializer
+    UserDetailSerializer, AddUserBrowsingHistorySerializer, SKUSerializer
 
 
 class UserView(CreateAPIView):
@@ -186,3 +188,29 @@ class AddressViewSet(CreateModelMixin, UpdateModelMixin, GenericViewSet):
         serializers.is_valid(raise_exception=True)
         serializers.save()
         return Response(serializers.data)
+
+
+class UserBrowsingHistoryView(CreateAPIView):
+    """
+    用户浏览历史记录
+    """
+    serializer_class = AddUserBrowsingHistorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        返回到前端：　1.先查询redis; 2.然后再查询mysql
+        """
+        user_id = self.request.user.id
+        redis_conn = get_redis_connection('history')
+        histories = redis_conn.lrange("history_%s" % user_id, 0, constants.USER_BROWSING_HISTORY_COUNTS_LIMIT - 1)
+        skus = []
+        # 为了保持查询出的顺序与用户的浏览历史保存顺序一致
+        for sku_id in histories:
+            sku = SKU.objects.get(id=sku_id)
+            skus.append(sku)
+
+        s = SKUSerializer(skus, many=True)
+
+        return Response(s.data)
+
