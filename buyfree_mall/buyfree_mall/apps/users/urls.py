@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^usernames/(?P<username>\w{5,20})/count/$', views.UsernameCountView.as_view()),  # 保证用户名的唯一性
     url(r'^user/$', views.UserDetailView.as_view()),  # 个人用户中心
     url(r'^email/$', views.EmailView.as_view()),  # 设置邮箱
+    url(r'^browse_histories/$', views.UserBrowsingHistoryView.as_view()),
 ]
 
 router = routers.DefaultRouter()

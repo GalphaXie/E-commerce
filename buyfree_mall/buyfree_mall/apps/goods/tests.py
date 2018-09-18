@@ -53,10 +53,40 @@ python调用的时候,只需要调用一个函数 upload_by_filename() |  upload
 
 这样我们即可以 使用 Django的admin站点中 封装的(ImageField字段)对应的上传图片功能--Django文件存储系统, 方便操作, 同时把部分url保存到本地数据库,又可以把内容保存到 Storage中,
 
+---------------------------------------
+admin站点管理
+
+sku 没有 delete 方法,没懂?
+
+这附近有点难
 
 
+python 脚本
+1. 添加路径(和之前的启动路径不同)
+2. 配置Django环境
+3. Django初始化
+4. 导包
+5. 加声明( which Python)  # 注意这里要用虚拟环境的解释器
+6. 添加脚本权限
 
+学会:python脚本的 写 配置 调用 
 
+生成的界面图片,说明图片链接缺少: 考虑后台 tracker 和 Storage 停机. 通过 docker container ls 发现没有开启;
+然后使用: 
+docker container start tracker  
+docker container start storage
+
+-------------------------------
+浏览记录  
+- 业务逻辑:访问详情页添加到浏览记录, 登录个人中心才可以查看, 限制查看总条数
+- 需求: 1.有序; 2.不重复
+- 使用技术：　redis的list  也可以 zset(时间戳来区分先后)
+    - 浏览记录相对添加频率频繁(每访问一个商品详情页就去操作一次),不适合 mysql 来保存
+    - 在redis 中保存 sku_id 即可, 当要通过 点击进入 详情页的时候,才去查和跳转
+    - redis 中: string(其实是字节型,是一切的基础) hash(类似dict, 但是key和value都必须是str) list(多个字符串的序列,无序,可重复) set(不重复) zset(有序,不重复)
+- 两个接口:ＰＯＳＴ　和　ＧＥＴ
+    - 难题:sku_id 不能用常规的 ModelSerializer的方法,因为字段 id 默认是后端自生成,不能接收相当于'read_only'
+    - 解决:直接继承 Serializer
 
 
 

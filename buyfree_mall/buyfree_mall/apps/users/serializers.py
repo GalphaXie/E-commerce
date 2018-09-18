@@ -202,7 +202,7 @@ class AddUserBrowsingHistorySerializer(serializers.Serializer):
     """
     添加用户浏览历史序列化器
     """
-    sku_id = serializers.ImageField(label="商品SKU编号", min_value=1)
+    sku_id = serializers.IntegerField(label="商品SKU编号", min_value=1)
 
     def validate_sku_id(self, value):
         """
