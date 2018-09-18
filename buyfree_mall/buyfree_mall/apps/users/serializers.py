@@ -9,7 +9,10 @@ from django_redis import get_redis_connection
 from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 
-from users.models import User
+from celery_tasks.email.tasks import send_verify_email
+from goods.models import SKU
+from users import constants
+from users.models import User, Address
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -109,3 +112,131 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
         # return 最终会被序列化的数据,可以是  模型对象 或 validated_data
         return user
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    '''
+    username, mobile, email id email_active
+    该序列化器不需要进行校验操作,只需要向前端返回
+    '''
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'mobile', 'email', 'email_active')  # id 自增的,不需要前端传递
+
+
+class EmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email')
+        # 这里邮箱都不需要自己校验,因为邮箱格式都是一样,而且自带了校验;因为AbstractUser有字段email,对应到序列化器Serializer.EmailField()
+        extra_kwargs = {
+            'email': {
+                'required': True
+            }
+        }
+
+    def update(self, instance, validated_data):
+        '''
+
+        :param instance: 视图传递过来的user对象
+        :param validated_data:
+        :return:
+        '''
+        email = validated_data['email']
+        url = instance.generate_verify_email_url()
+        send_verify_email.delay(email, url)
+        return instance
+
+
+class UserAddressSerializer(serializers.ModelSerializer):
+    """
+    用户地址序列化器
+    tb_address表中对应的字段:　
+    id create_time update_time title receiver place mobile tel email is_delete city_id district_id province_id user_id
+    """
+    # 可以发现　模型类　中　外键字段　是以　id 存储的, 但是可以取出其 对应的 对象, 所以在序列化器中可以直接写 id 对应的 对象名字 等字段
+    # 前端传递回来的是 id ; 而我们要给前端展示的是 对象name
+    # 下面只对 三个 外键 标记的字段作了 选项的操作
+    province = serializers.StringRelatedField(read_only=True)
+    city = serializers.StringRelatedField(read_only=True)
+    district = serializers.StringRelatedField(read_only=True)
+    province_id = serializers.IntegerField(label='省ID', required=True)
+    city_id = serializers.IntegerField(label='市ID', required=True)
+    district_id = serializers.IntegerField(label='区ID', required=True)
+
+    class Meta:
+        model = Address
+        exclude = ('user', 'is_deleted', 'create_time', 'update_time')
+
+    def validate_mobile(self, value):
+        """校验手机号"""
+        if not re.match(r'1[3-9]\d{9}$', value):
+            return serializers.ValidationError('手机格式错误')
+        return value
+
+    def create(self, validated_data):
+        """保存数据"""
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class AddressTitleSerializer(serializers.ModelSerializer):
+    """
+    地址标题
+    """
+
+    class Meta:
+        model = Address
+        fields = ('title',)  # 元组字段
+
+
+''''
+class AddUserBrowsingHistorySerializer(serializers.CreateSerializer):
+    # 难题:sku_id 不能用常规的 ModelSerializer的方法,因为字段 id 默认是后端自生成,不能接收相当于'read_only'
+    => 直接继承 Serializer
+'''
+
+
+class AddUserBrowsingHistorySerializer(serializers.Serializer):
+    """
+    添加用户浏览历史序列化器
+    """
+    sku_id = serializers.IntegerField(label="商品SKU编号", min_value=1)
+
+    def validate_sku_id(self, value):
+        """
+        检验sku_id是否存在
+        """
+        try:
+            SKU.objects.get(id=value)
+        except SKU.DoesNotExist:
+            raise serializers.ValidationError('该商品不存在')
+        return value
+
+    def create(self, validated_data):
+        """
+        保存 -> redis ;  user_id -> key;  sku_id -> value
+        """
+        user_id = self.context['request'].user.id
+        sku_id = validated_data['sku_id']
+
+        redis_conn = get_redis_connection('history')
+        pl = redis_conn.pipeline()
+
+        # 移除已经存在的本商品浏览记录
+        pl.lrem("history_%s" % user_id, 0, sku_id)
+        # 添加新的浏览记录
+        pl.lpush("history_%s" % user_id, sku_id)
+        # 只保存最多5条记录
+        pl.ltrim("history_%s" % user_id, 0, constants.USER_BROWSING_HISTORY_COUNTS_LIMIT - 1)
+
+        pl.execute()
+
+        return validated_data
+
+
+class SKUSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SKU
+        fields = ("id", "name", "price", "default_image_url", 'comments')

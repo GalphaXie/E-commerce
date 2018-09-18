@@ -6,6 +6,7 @@
 import re
 
 from django.contrib.auth.backends import ModelBackend
+from django.db.models import Q
 
 from users.models import User
 
@@ -49,6 +50,10 @@ class UsernameMobileAuthBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         # 获取用户对象
         user = get_user_by_account(username)
+
+        # 补充一个 手机号验证的逻辑
+        # User.objects.get(Q(mobile=username) | Q(username=username))  # 这里逻辑还有问题
+
         # 如果用户对象存在,那么校验密码,如果密码校验通过,那么返回用户
         if user is not None and user.check_password(password):  # 用户传递过来的密码是需要django自带的方法来校验的
             return user

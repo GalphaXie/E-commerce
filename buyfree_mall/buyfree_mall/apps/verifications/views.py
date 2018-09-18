@@ -97,22 +97,3 @@ class SMSCodeView(GenericAPIView):
         # 响应 (不是从数据库返回的数据,简单的数据,不需要序列化器)
         return Response({'message': 'OK'})
 
-
-# 分析: 接受前端通过正则校验过的数据,到数据库查询用户名的数量,返回给前端
-# url(r'^usernames/(?P<username>\w{5,20})/count/$', views.UsernameCountView.as_view()),
-class UsernameCountView(APIView):
-    """
-    用户名数量
-    """
-    def get(self, request, username):
-        """
-        获取指定用户名数量
-        """
-        count = User.objects.filter(username=username).count()
-
-        data = {
-            'username': username,
-            'count': count
-        }
-
-        return Response(data)
