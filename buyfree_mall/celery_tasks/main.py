@@ -19,5 +19,5 @@ celery_app = Celery('buyfree')
 celery_app.config_from_object('celery_tasks.config')
 
 # 自动发现celery任务(列表) 默认会调用sms包内的 task.py文件,所以不用写 task.py
-celery_app.autodiscover_tasks(['celery_tasks.sms', 'celery_tasks.email'])
+celery_app.autodiscover_tasks(['celery_tasks.sms', 'celery_tasks.email', 'celery_tasks.html'])
 
