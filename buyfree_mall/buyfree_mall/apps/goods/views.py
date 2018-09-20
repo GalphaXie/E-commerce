@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 # Create your views here.
+from drf_haystack.viewsets import HaystackViewSet
 from rest_framework.filters import OrderingFilter
 
 from rest_framework.generics import ListAPIView
@@ -8,7 +9,7 @@ from rest_framework.generics import ListAPIView
 from buyfree_mall.utils.pagination import StandardResultsSetPagination
 from goods.filters import CateFilter
 from goods.models import SKU
-from goods.serializers import SKUSerializer
+from goods.serializers import SKUSerializer, SKUIndexSerializer
 
 
 # rest 风格推荐，　以查询字符串的形式获取　列表　的(过滤)信息
@@ -53,3 +54,8 @@ class SKUListView(ListAPIView):
 
     # 分页  个性化配置
 '''
+
+
+class SKUSearchViewSet(HaystackViewSet):
+    index_models = [SKU]
+    serializer_class = SKUIndexSerializer
