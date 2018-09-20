@@ -59,7 +59,10 @@ class SKUImageAdmin(admin.ModelAdmin):
 
         # 设置SKU默认图片
         sku = obj.sku
+
         if not sku.default_image_url:
+            # http://image.meiduo.site:8888/groupxxxxxx
+            # default_image_url 对应的字段是 CharField ,是一个完整的 url
             sku.default_image_url = obj.image.url
             sku.save()
 
