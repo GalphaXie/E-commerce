@@ -41,10 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
+    'corsheaders',  # 1. heads 用于处理跨域资源共享的相关http头
     'ckeditor',  # 富文本编辑器
     'ckeditor_uploader',  # 富文本编辑器上传图片模块
     'django_crontab',  # 定时任务
+    'haystack',  # 对接搜索引擎
     'users.apps.UsersConfig',
     'verifications.apps.VerificationsConfig',
     'oauth.apps.OauthConfig',
@@ -54,7 +55,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # 关注顺序  # 解决跨域请求
+    'corsheaders.middleware.CorsMiddleware',  # 2. 关注顺序(一定要添加到最前面)  # 解决跨域请求
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -220,6 +221,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
+    # 分页
+    'DEFAULT_PAGINATION_CLASS': 'buyfree_mall.utils.pagination.StandardResultsSetPagination',
 }
 
 JWT_AUTH = {
@@ -236,7 +239,7 @@ AUTHENTICATION_BACKENDS = [
     'users.utils.UsernameMobileAuthBackend',
 ]
 
-# CORS
+# CORS  3.1 白名单
 # 对比 ALLOWED_HOSTS , 为何上面不用端口,这里要加上port
 CORS_ORIGIN_WHITELIST = (
     '127.0.0.1:8080',
@@ -244,7 +247,7 @@ CORS_ORIGIN_WHITELIST = (
     'www.meiduo.site:8080',
     'api.meiduo.site:8000'
 )
-CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
+CORS_ALLOW_CREDENTIALS = True  # 3.2 允许携带cookie
 
 # QQ登录参数
 QQ_CLIENT_ID = '101474184'
@@ -302,3 +305,15 @@ CRONJOBS = [
 
 # 解决crontab中文问题
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+# Haystack
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.129.169/',  # 此处为elasticsearch运行的服务器ip地址，端口号固定为9200
+        'INDEX_NAME': 'buyfree',  # 指定elasticsearch建立的索引库的名称
+    },
+}
+
+# 当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'  # 实时
