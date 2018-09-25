@@ -88,9 +88,19 @@ docker container start storage
     - 难题:sku_id 不能用常规的 ModelSerializer的方法,因为字段 id 默认是后端自生成,不能接收相当于'read_only'
     - 解决:直接继承 Serializer
 
+---------------------------------------
+列表: 分页 过滤 排序
 
+queryset 是从 methods 中通过 request.query_params 取到的; 而 类视图的类属性 不能直接取到当前实例(请求)
 
+外键 category_id  
 
+分页类(继承 PageNumberPagination)  三个参数: 1.前端如果没指定后端默认的采取数量; 2.指明参数类; 3.限制前端传递的最大数量
+
+前端网址不变，而只改变数据
+
+------------------------------------------------
+docker run -dti --network=host --name=elasticsearch -v /home/richard/software/elasticsearch-2.4.6/config:/usr/share/elasticsearch/config delron/elasticsearch-ik:2.4.6-1.0
 
 
 """

@@ -176,9 +176,10 @@ class CartView(GenericAPIView):  # 继承 GenericAPIView
             # 处理 selected 状态
             if selected:
                 # 表示勾选
-                pl.sadd('cart_%s' % user.id, sku_id)
+                pl.sadd('cart_selected_%s' % user.id, sku_id)
+            else:
                 # 取消勾选
-                pl.srem('cart_%s' % user.id, sku_id)
+                pl.srem('cart_selected_%s' % user.id, sku_id)
             pl.execute()
             # 序列化返回
             return Response(serializer.data)
