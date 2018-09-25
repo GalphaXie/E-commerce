@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 # POST /cart/
 from carts import constants
-from carts.serializers import CartSerializer, CartSKUSerializer
+from carts.serializers import CartSerializer, CartSKUSerializer, CartDeleteSerializer
 from goods.models import SKU
 
 
@@ -210,6 +210,57 @@ class CartView(GenericAPIView):  # 继承 GenericAPIView
                 # 设置cookie
                 response.set_cookie('cart', cart_cookie, max_age=constants.CART_COOKIE_EXPIRES)
             return response
+
+    def delete(self, request):
+        """删除购物车数据"""
+        # 校验参数(sku_id是否符合规范, 商品是否存在)
+        serializer = CartDeleteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        sku_id = serializer.validated_data['sku_id']
+        # 判断用户是否登录
+        try:
+            user = request.user
+        except Exception:
+            user = None
+
+        if user and user.is_authenticated:
+            # 登录, 删除 redis
+            redis_conn = get_redis_connection('cart')
+            pl = redis_conn.pipeline()
+            # 删除 hash
+            pl.hdel('cart_%s' % user.id, sku_id)
+            # 删除 set
+            pl.srem('cart_selected_%s' % user.id, sku_id)
+            pl.execute()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            # 未登录, 删除 cookie
+            cart_cookie = request.COOKIES.get('cart')
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            if cart_cookie:
+                # cookie中有购物车数据
+                # 解析
+                cart_dict = pickle.loads(base64.b64decode(cart_cookie.encode()))
+            else:
+                # 没有购物车数据
+                cart_dict = {}
+            if sku_id in cart_dict:
+                # 删除
+                del cart_dict[sku_id]
+
+                # 数据序列化操作
+                cart_cookie = base64.b64encode(pickle.dumps(cart_dict)).decode()
+                # 设置cookie
+                response.set_cookie('cart', cart_cookie, max_age=constants.CART_COOKIE_EXPIRES)
+            return response
+
+
+
+
+        # 序列化返回
+
+
+
 
 
 
