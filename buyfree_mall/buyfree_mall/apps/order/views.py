@@ -52,7 +52,7 @@ class OrderSettlementView(APIView):  # 不继承List...,因为是对应列表类
         # serializer = CartSKUSerializer(sku_obj_list, many=True)
         # return Response({'freight': freight, 'skus': serializer.data})
 
-        serializer = OrderSettlementSerializer({'freight': freight, 'skus':sku_obj_list}, many=True)
+        serializer = OrderSettlementSerializer({'freight': freight, 'skus':sku_obj_list})
         return Response(serializer.data)
 
 
