@@ -81,7 +81,7 @@ class CartView(GenericAPIView):  # 继承 GenericAPIView
                 cart_dict[sku]['selected'] = selected
             else:
                 # 如果商品不在购物车中
-                cart_dict[sku] = {
+                cart_dict[sku_id] = {
                     'count': count,
                     'selected': selected
                 }

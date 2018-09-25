@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
+from carts.utils import merge_cart_cookie_to_redis
 from oauth.exceptions import OAuthQQAPIError
 from oauth.models import OAuthQQUser
 from oauth.serializers import OAuthQQUserSerializer
@@ -39,6 +40,14 @@ class OAuthQQUserView(CreateAPIView):
     """
     QQ 登录的用户, ?code=xxx
     """
+    # 实现 绑定QQ用户的操作
+    serializer_class = OAuthQQUserSerializer
+
+    # 要使用post方法来提交表单,然后进行序列化器校验,返回结果;发现通用的写法CreateAPIView已经实现
+    # 所以将上面的类重新继承 CreateAPIView
+    # def post(self, request):
+    # pass
+
     # 继续查看 API 接口文档
     def get(self, request):
         # 获取code
@@ -75,20 +84,30 @@ class OAuthQQUserView(CreateAPIView):
             payload = jwt_payload_handler(user)
             token = jwt_encode_handler(payload)
 
-        return Response({
+        # return Response({
+        #     'token': token,
+        #     'username': user.username,
+        #     'user_id': user.id
+        # })
+        response = Response({
             'token': token,
             'username': user.username,
             'user_id': user.id
         })
 
-    # 实现 绑定QQ用户的操作
-    serializer_class = OAuthQQUserSerializer
+        # 合并购物车
+        merge_cart_cookie_to_redis(request, user, response)
 
-    # 要使用post方法来提交表单,然后进行序列化器校验,返回结果;发现通用的写法CreateAPIView已经实现
-    # 所以将上面的类重新继承 CreateAPIView
-    # def post(self, request):
-    # pass
+        return response
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        # 合并购物车
+        user = self.user
+        merge_cart_cookie_to_redis(request, user, response)
+
+        return response
 
 
 
