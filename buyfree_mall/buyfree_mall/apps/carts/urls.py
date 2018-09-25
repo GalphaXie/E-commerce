@@ -1,5 +1,7 @@
-# -*- coding: utf-8 -*-
-# @File : urls.py
-# @Author : Xie
-# @Date   : 9/20/18
-# @Desc   : 
+from django.conf.urls import url
+
+from carts import views
+
+urlpatterns = [
+    url(r'^cart/$', views.CartView.as_view())
+]
