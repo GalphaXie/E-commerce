@@ -108,3 +108,6 @@ venv.bak/
 
 # 数据库迁移不上传
 migrations/!__init__.py
+
+# 本地笔记
+Notes.md

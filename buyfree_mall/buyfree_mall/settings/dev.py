@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'areas.apps.AreasConfig',
     'goods.apps.GoodsConfig',
     'contents.apps.ContentsConfig',
+    'carts.apps.CartsConfig',
+    'order.apps.OrderConfig',
 ]
 
 MIDDLEWARE = [
@@ -128,6 +130,13 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    "cart": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }
 # 给admin站点使用的session
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
