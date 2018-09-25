@@ -10,8 +10,10 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 # POST /cart/
+from rest_framework.views import APIView
+
 from carts import constants
-from carts.serializers import CartSerializer, CartSKUSerializer, CartDeleteSerializer
+from carts.serializers import CartSerializer, CartSKUSerializer, CartDeleteSerializer, CartSelectAllSerializer
 from goods.models import SKU
 
 
@@ -255,12 +257,61 @@ class CartView(GenericAPIView):  # 继承 GenericAPIView
             return response
 
 
+class CartSelectAllView(APIView):
+    """购物车全选"""
 
+    def perform_authentication(self, request):
+        pass
 
-        # 序列化返回
+    def put(self, request):
+        serializer = CartSelectAllSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        selected = serializer.validated_data['selected']
 
+        # 判断用户是否登录
+        try:
+            user = request.user
+        except Exception:
+            user = None
 
+        if user and user.is_authenticated:
+            # 用户已登录, 操作 redis
+            redis_conn = get_redis_connection('cart')
+            sku_id_list = redis_conn.hgetall('cart_%s' % user.id)
 
+            if selected:
+                # 将购物车中所有的商品sku_id全部加入 set
+                redis_conn.sadd('cart_selected_%s' % user.id, *sku_id_list)
+            else:
+                # 反选, 执行删除操作
+                redis_conn.srem('cart_selected_%s' % user.id, *sku_id_list)
+            return Response({'message': 'OK'})
+        else:
+            # 用户未登录,操作 cookie
+            cart_cookies = request.COOKIES.get('cart')
+            if cart_cookies:
+                # cookie 中有 购物车 数据
+                cart_dict = pickle.loads(base64.b16decode(cart_cookies.encode()))
+            else:
+                cart_dict = {}
 
+            # cart_dict = {
+            #     sku_id_1: {
+            #         'count': 10
+            #         'selected': True
+            #     },
+            #     sku_id_2: {
+            #         'count': 10
+            #         'selected': False
+            #     },
+            # }
 
+            response = Response({'message': 'OK'})
 
+            for count_selected_dict in cart_dict.values():
+                count_selected_dict['selected'] = selected
+
+            # 设置 cookies 并 返回
+            cart_cookies = base64.b64encode(pickle.dumps(cart_dict)).decode()
+            response.set_cookie('cart', cart_cookies, max_age=constants.CART_COOKIE_EXPIRES)
+            return response
