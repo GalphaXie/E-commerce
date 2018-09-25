@@ -6,8 +6,8 @@ from django.shortcuts import render
 # Create your views here.
 from django_redis import get_redis_connection
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 # POST /cart/
 from carts import constants
@@ -15,7 +15,7 @@ from carts.serializers import CartSerializer, CartSKUSerializer
 from goods.models import SKU
 
 
-class CartView(APIView):  # 继承 GenericAPIView
+class CartView(GenericAPIView):  # 继承 GenericAPIView
     # cookies 请求,首先要修改后端的配置,允许在跨域请求中后端可以使用cookies;
     # 前端请求头中携带 Authorization, 可能为空; 防止后端异常,进行两个操作: 1. 重写验证前判断用户登录状态的方法; 2.捕获异常.
 
@@ -101,14 +101,13 @@ class CartView(APIView):  # 继承 GenericAPIView
         if user and user.is_authenticated:
             # 2. 如果已登录,那么从redis 中查询  :  sku_id, count, selected
             redis_conn = get_redis_connection('cart')
-            pl = redis_conn.pipeline()
-            redis_cart = pl.hgetall("cart_%s" % user.id)  # redis 中虽然保存的都是字典,但是具体的数据类型都是bytes
+            redis_cart = redis_conn.hgetall("cart_%s" % user.id)  # redis 中虽然保存的都是字典,但是具体的数据类型都是bytes
             # redis_cart = {
             #     商品的sku_id  bytes字节类型: 数量  bytes字节类型
             #     商品的sku_id  bytes字节类型: 数量  bytes字节类型
             #    ...
             # }
-            redis_cart_selected = pl.smemebers('cart_selected_%s' % user.id)
+            redis_cart_selected = redis_conn.smembers('cart_selected_%s' % user.id)
             # redis_cart_selected = set(勾选的商品sku_id bytes字节类型, ....)
 
             # 遍历 redis_dict , 形成 cart_dict
@@ -152,3 +151,64 @@ class CartView(APIView):  # 继承 GenericAPIView
         # 5. 序列化返回
         serializer = CartSKUSerializer(sku_obj_list, many=True)
         return Response(serializer.data)
+
+    def put(self, request):
+        """修改购物车数据"""
+        # sku_id, count, selected
+        # 校验
+        serializer = CartSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        sku_id = serializer.validated_data['sku_id']
+        count = serializer.validated_data['count']
+        selected = serializer.validated_data['selected']
+
+        # 判断用户是否登录
+        try:
+            user = request.user
+        except Exception:
+            user = None
+        if user and user.is_authenticated:
+            # 已登录,查询 修改 redis
+            redis_conn = get_redis_connection('cart')
+            pl = redis_conn.pipeline()
+            # 处理count
+            pl.hset('cart_%s' % user.id, sku_id, count)
+            # 处理 selected 状态
+            if selected:
+                # 表示勾选
+                pl.sadd('cart_%s' % user.id, sku_id)
+                # 取消勾选
+                pl.srem('cart_%s' % user.id, sku_id)
+            pl.execute()
+            # 序列化返回
+            return Response(serializer.data)
+
+        else:
+            # 未登录,查询 修改 cookie
+            cart_cookie = request.COOKIES.get('cart')
+            if cart_cookie:
+                # 表示cookie中有购物车数据
+                # 解析
+                cart_dict = pickle.loads(base64.b64decode(cart_cookie.encode()))
+            else:
+                # 表示 cookie 中没有购物车数据
+                cart_dict = {}
+
+            response = Response(serializer.data)
+
+            # 修改 cookie 中的cart数据
+            if sku_id in cart_dict:
+                # 存在购物车数据, 进行修改
+                cart_dict['sku_id'] = {
+                    'count': count,
+                    'selected': selected
+                }
+                cart_cookie = base64.b64encode(pickle.dumps(cart_dict)).decode()
+
+                # 序列化返回
+                # 设置cookie
+                response.set_cookie('cart', cart_cookie, max_age=constants.CART_COOKIE_EXPIRES)
+            return response
+
+
+
