@@ -11,7 +11,8 @@ from rest_framework.views import APIView
 
 # POST /cart/
 from carts import constants
-from carts.serializers import CartSerializer
+from carts.serializers import CartSerializer, CartSKUSerializer
+from goods.models import SKU
 
 
 class CartView(APIView):  # 继承 GenericAPIView
@@ -40,7 +41,7 @@ class CartView(APIView):  # 继承 GenericAPIView
         # 这里可以参看用户验证的时候源码, 返回的是 request.user 实际上这里和我们理解的不一样,这里user是属性方法
         try:
             user = request.user
-        except:
+        except Exception:
             # 验证未通过
             user = None
 
@@ -88,3 +89,66 @@ class CartView(APIView):  # 继承 GenericAPIView
             response.set_cookie('cart', cart_cookies, max_age=constants.CART_COOKIE_EXPIRES)
             return response
 
+    def get(self, request):
+        """查询购物车"""
+        # 1. 判断用户是否登录
+        try:
+            user = request.user
+        except Exception:
+            user = None
+
+        # 查询
+        if user and user.is_authenticated:
+            # 2. 如果已登录,那么从redis 中查询  :  sku_id, count, selected
+            redis_conn = get_redis_connection('cart')
+            pl = redis_conn.pipeline()
+            redis_cart = pl.hgetall("cart_%s" % user.id)  # redis 中虽然保存的都是字典,但是具体的数据类型都是bytes
+            # redis_cart = {
+            #     商品的sku_id  bytes字节类型: 数量  bytes字节类型
+            #     商品的sku_id  bytes字节类型: 数量  bytes字节类型
+            #    ...
+            # }
+            redis_cart_selected = pl.smemebers('cart_selected_%s' % user.id)
+            # redis_cart_selected = set(勾选的商品sku_id bytes字节类型, ....)
+
+            # 遍历 redis_dict , 形成 cart_dict
+            cart_dict = {}
+            for sku_id, count in redis_cart.items():
+                cart_dict[int(sku_id)] = {
+                    'count': int(count),  # 可以直接将bytes转成python中的int
+                    'selected': sku_id in redis_cart_selected  # in 直接来形成 True|False
+                }
+        else:
+            # 3. 如果未登录, 那么从 cookies 中查询: ...
+            cookie_cart = request.COOKIES.get('cart', None)  # 前面设置的cookies中的名字就是 cart
+            if cookie_cart:
+                # 表示cookie中有购物车数据
+                # 解析
+                cart_dict = pickle.loads(base64.b64decode(cookie_cart.encode()))
+            else:
+                cart_dict = {}
+
+        # 不论是否登录,最终都处理成 下面的 数据结构设计
+        # cart_dict = {
+        #     sku_id_1: {
+        #         'count': 10
+        #         'selected': True
+        #     },
+        #     sku_id_2: {
+        #         'count': 10
+        #         'selected': False
+        #     },
+        # }
+
+        # 4. 查询数据库,获取商品的详细信息
+        sku_id_list = cart_dict.keys()
+        sku_obj_list = SKU.objects.filter(id__in=sku_id_list)
+
+        # 遍历sku_obj_list 向sku对象中添加count和selected属性
+        for sku in sku_obj_list:
+            sku.count = cart_dict[sku.id]['count']
+            sku.selected = cart_dict[sku.id]['selected']
+
+        # 5. 序列化返回
+        serializer = CartSKUSerializer(sku_obj_list, many=True)
+        return Response(serializer.data)
