@@ -40,7 +40,7 @@ class CartSKUSerializer(serializers.ModelSerializer):
         fields = ('id', 'count', 'name', 'default_image_url', 'price', 'selected')
 
 
-class CartDeleteSerializer(serializers.ModelSerializer):
+class CartDeleteSerializer(serializers.Serializer):
     """删除购物车数据序列化器"""
     sku_id = serializers.IntegerField(label='商品id', min_value=1)
 
