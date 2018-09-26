@@ -4,12 +4,13 @@ from django.shortcuts import render
 
 # Create your views here.
 from django_redis import get_redis_connection
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from goods.models import SKU
-from order.serializers import OrderSettlementSerializer
+from order.serializers import OrderSettlementSerializer, SaveOrderSerializer
 
 
 class OrderSettlementView(APIView):  # 不继承List...,因为是对应列表类型,这里是大字典的数据设计
@@ -54,5 +55,13 @@ class OrderSettlementView(APIView):  # 不继承List...,因为是对应列表类
 
         serializer = OrderSettlementSerializer({'freight': freight, 'skus':sku_obj_list})
         return Response(serializer.data)
+
+
+class SaveOrderView(CreateAPIView):  # 继承 CreateAPIView, 调用其 post 方法即可实现 校验和返回
+    """
+    保存订单
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = SaveOrderSerializer
 
 
