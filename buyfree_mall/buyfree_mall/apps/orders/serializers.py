@@ -95,34 +95,54 @@ class SaveOrderSerializer(serializers.ModelSerializer):
 
                 # 查询数据库 获取商品数据(库存信息)
                 sku_id_list = cart.keys()
-                sku_obj_list = SKU.objects.filter(id__in=sku_id_list)
+                # sku_obj_list = SKU.objects.filter(id__in=sku_id_list)
 
                 # 遍历需要结算的商品列表
-                for sku in sku_obj_list:
-                    # 用户需要购买的数量
-                    sku_count = cart[sku.id]
+                for sku_id in sku_id_list:
+                    while True:
+                        # 查询商品de 最新 库存信息
+                        sku = SKU.objects.get(id=sku_id)
+                        # 用户需要购买的数量
+                        sku_count = cart[sku.id]
+                        origin_stock = sku.stock
+                        origin_sales = sku.sales
 
-                    # 判断库存(需要遍历操作,下面创建商品详情订单也需要遍历操作,所以 合并到一块儿在下面操作)
-                    if sku.stock < sku_count:
-                        # 回滚到保存点
-                        transaction.savepoint_rollback(save_id)
-                        raise serializers.ValidationError('商品%s库存不足' % sku.name)
+                        # 判断库存(需要遍历操作,下面创建商品详情订单也需要遍历操作,所以 合并到一块儿在下面操作)
+                        if origin_stock < sku_count:
+                            # 回滚到保存点
+                            transaction.savepoint_rollback(save_id)
+                            raise serializers.ValidationError('商品%s库存不足' % sku.name)
 
-                    # 库存减少,销量增加
-                    sku.stock -= sku_count
-                    sku.sales += sku_count
-                    sku.save()
+                        import time
+                        time.sleep(5)
 
-                    order.total_count += sku_count
-                    order.total_amount += (sku.price * sku_count)
+                        # # 库存减少,销量增加
+                        # sku.stock -= sku_count
+                        # sku.sales += sku_count
+                        # sku.save()
+                        new_stock = origin_stock - sku_count
+                        new_sales = origin_sales + sku_count
+                        result = SKU.objects.filter(id=SKU.id, stock=origin_stock).update(stock=new_stock,
+                                                                                          sales=new_sales)
+                        # 在Django 中 update 也会有返回值(返回受影响的行数)
+                        if result == 0:
+                            # 表示更新失败，有人抢了商品
+                            # 结束本次while循环，进行下一次while循环
+                            continue
 
-                    # 2.创建订单商品信息表,OrderGoods
-                    OrderGoods.objects.create(
-                        order=order,
-                        sku=sku,
-                        count=sku_count,
-                        price=sku.price
-                    )
+                        order.total_count += sku_count
+                        order.total_amount += (sku.price * sku_count)
+
+                        # 2.创建订单商品信息表,OrderGoods
+                        OrderGoods.objects.create(
+                            order=order,
+                            sku=sku,
+                            count=sku_count,
+                            price=sku.price
+                        )
+
+                        # 跳出while循环，进行for循环
+                        break
 
                 order.save()
             except serializers.ValidationError:
