@@ -122,7 +122,7 @@ class SaveOrderSerializer(serializers.ModelSerializer):
                         # sku.save()
                         new_stock = origin_stock - sku_count
                         new_sales = origin_sales + sku_count
-                        result = SKU.objects.filter(id=SKU.id, stock=origin_stock).update(stock=new_stock,
+                        result = SKU.objects.filter(id=sku.id, stock=origin_stock).update(stock=new_stock,
                                                                                           sales=new_sales)
                         # 在Django 中 update 也会有返回值(返回受影响的行数)
                         if result == 0:
