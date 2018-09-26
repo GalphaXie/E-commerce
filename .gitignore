@@ -111,3 +111,6 @@ migrations/!__init__.py
 
 # 本地笔记
 Notes.md
+
+# 公钥
+keys/*
