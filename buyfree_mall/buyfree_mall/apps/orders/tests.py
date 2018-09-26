@@ -8,7 +8,8 @@ from django.test import TestCase
 - 2. decimal 来 控制精度 
 - 3. choice 枚举
 
-
+回滚 注意点:
+- 数据库出现异常才会回滚
 
 
 

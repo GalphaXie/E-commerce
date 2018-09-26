@@ -4478,7 +4478,7 @@ function initRender (vm) {
   vm.$scopedSlots = emptyObject;
   // bind the createElement fn to this instance
   // so that we get proper render context inside it.
-  // args order: tag, data, children, normalizationType, alwaysNormalize
+  // args orderss: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
   vm._c = function (a, b, c, d) { return createElement(vm, a, b, c, d, false); };
   // normalization is always applied for the public version, used in

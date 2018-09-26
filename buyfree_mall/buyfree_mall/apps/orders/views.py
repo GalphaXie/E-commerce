@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from goods.models import SKU
-from order.serializers import OrderSettlementSerializer, SaveOrderSerializer
+from orders.serializers import OrderSettlementSerializer, SaveOrderSerializer
 
 
 class OrderSettlementView(APIView):  # 不继承List...,因为是对应列表类型,这里是大字典的数据设计

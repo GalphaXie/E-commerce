@@ -8,7 +8,7 @@ from rest_framework import serializers
 
 from carts.serializers import CartSKUSerializer
 from goods.models import SKU
-from order.models import OrderInfo, OrderGoods
+from orders.models import OrderInfo, OrderGoods
 
 logger = logging.getLogger('django')
 
@@ -52,7 +52,7 @@ class SaveOrderSerializer(serializers.ModelSerializer):
         pay_method = validated_data['pay_method']
 
         # 获取用户对象 user
-        user = self.context['requests'].user
+        user = self.context['request'].user
 
         # 查询购物车 sku_id count selected
         redis_conn = get_redis_connection('cart')
