@@ -228,6 +228,7 @@ REST_FRAMEWORK = {
     # 这个配置要等后面做购物车的时候才有用
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        # 'buyfree_mall.utils.auth.MyJSONWebTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),

@@ -16,6 +16,7 @@ def exception_handler(exc, context):
     :param context: 抛出异常的上下文
     :return: Response响应对象
     """
+    # return None
     # 调用drf框架原生的异常处理方法
     response = drf_exception_handler(exc, context)  # rest提供的方法如果不能处理的异常，该函数最后会返回 None。
 
