@@ -46,7 +46,6 @@ class CartView(GenericAPIView):  # 继承 GenericAPIView
         except Exception:
             # 验证未通过
             user = None
-
         if user is not None and user.is_authenticated:  # 如果不进行这一步验证,前端可能通过请求头传递一个匿名用户对象: AnonymousUser
             # 用户已经登录,在redis中保存
             redis_conn = get_redis_connection('cart')
@@ -77,8 +76,8 @@ class CartView(GenericAPIView):  # 继承 GenericAPIView
             sku = cart_dict.get(sku_id, None)
             if sku:
                 # 如果已经存在,那么累加商品,并且
-                cart_dict[sku]['count'] += count
-                cart_dict[sku]['selected'] = selected
+                cart_dict[sku_id]['count'] += count
+                cart_dict[sku_id]['selected'] = selected
             else:
                 # 如果商品不在购物车中
                 cart_dict[sku_id] = {
